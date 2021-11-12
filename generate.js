@@ -1,5 +1,27 @@
+const path = require('path');
 const fs = require('fs');
 const faker = require('faker');
+
+const flags = ['--outdir', '--nrootchildren', '--ncomponents'];
+const args = {};
+for (let i = 0; i < process.argv.length; i++) {
+  const arg = process.argv[i];
+
+  if (flags.indexOf(arg) !== -1 && i < process.argv.length - 1) {
+    if (process.argv[i+1].startsWith('--')) {
+      args[arg.replace('--', '')] = true;
+      continue;
+    }
+
+    args[arg.replace('--', '')] = process.argv[i+1];
+    i++;
+  }
+}
+
+if (!args.outdir) {
+  console.log('Must specify `--outdir X`');
+  process.exit(1);
+}
 
 function capitalize(s) {
   return s.charAt(0).toUpperCase() + s.substring(1);
@@ -29,7 +51,7 @@ function generateHTML(customComponents, maxChildren) {
     return;
   }
 
-  const elements = ['div', 'span', ...customComponents];
+  const elements = ['div', 'span', 'p', , ...customComponents];
 
   const tag = elements[randomInt(0, elements.length - 1)];
 
@@ -82,13 +104,24 @@ function renderHTML(tree, indent) {
   return `${indent}<${tree.tag}${props}>\n${children.join('\n')}${(children.length ? '\n' : '') + indent}</${tree.tag}>`;
 }
 
-function generateComponent(name, customChildren = [], nChildren = 20) {
+function generateComponent(name, toExport = false, customChildren = [], nChildren = 20) {
   const tree = generateHTML(customChildren, nChildren);
   const body = renderHTML(tree, '    ');
-  return `function ${name}() {\n  return (\n${body}\n  );\n}`;
+  return `${toExport ? 'export ' : ''}function ${name}() {\n  return (\n${body}\n  );\n}`;
 }
 
-const [rootComponent, ...components] = [...Array(20).keys()].map(name => randomWords(2, 5).map(capitalize).join(''));
-const deps = components.map((c) => generateComponent(c));
-const root = generateComponent(rootComponent, components);
-fs.writeFileSync(rootComponent + '.jsx', [deps, root].join('\n'));
+function generateFile(nComponents = 20, nRootChildren = 20) {
+  const [rootComponent, ...components] = [...Array(nComponents).keys()].map(name => randomWords(2, 5).map(capitalize).join(''));
+  const deps = components.map((c) => generateComponent(c));
+  const root = generateComponent(rootComponent, true, components, nRootChildren);
+
+  const imports = ['import React from "react";'].join('\n') + '\n';
+
+  fs.mkdir(args.outdir, { recursive: true }, () => {});
+  fs.writeFileSync(path.join(args.outdir, rootComponent + '.jsx'), [imports, deps, root].join('\n'));
+  return rootComponent;
+}
+
+for (let i = 0; i < +args.nfiles || 100; i++) {
+  generateFile(+args.ncomponents, +args.nrootchildren);
+}
