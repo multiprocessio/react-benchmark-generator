@@ -125,6 +125,21 @@ function generateFile(maxComponents, maxChildren) {
   return rootComponent;
 }
 
-for (let i = 0; i < (+args.nfiles || 100); i++) {
-  generateFile(+args.maxcomponents, +args.maxchildren);
+function generateIndex(components) {
+  const imports = ['import React from "react";'];
+  components.forEach(function addImport(c) {
+    imports.push(`import { ${c} } from './${c}.jsx';`);
+  });
+
+  const root = generateComponent('div', false, components, components.length);
+
+  fs.writeFileSync(path.join(args.outdir, 'index.jsx'), [imports.join('\n'), root].join('\n\n'));
 }
+
+const components = [];
+for (let i = 0; i < (+args.nfiles || 1); i++) {
+  const component = generateFile(+args.maxcomponents, +args.maxchildren);
+  components.push(component);
+}
+
+generateIndex(components);
