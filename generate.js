@@ -51,7 +51,7 @@ function generateHTML(customComponents, maxChildren) {
     return;
   }
 
-  const elements = ['div', 'span', 'p', , ...customComponents];
+  const elements = ['div', 'span', 'p', ...customComponents];
 
   const tag = elements[randomInt(0, elements.length - 1)];
 
@@ -115,10 +115,10 @@ function generateFile(nComponents = 20, nRootChildren = 20) {
   const deps = components.map((c) => generateComponent(c));
   const root = generateComponent(rootComponent, true, components, nRootChildren);
 
-  const imports = ['import React from "react";'].join('\n') + '\n';
+  const imports = ['import React from "react";'].join('\n');
 
   fs.mkdir(args.outdir, { recursive: true }, () => {});
-  fs.writeFileSync(path.join(args.outdir, rootComponent + '.jsx'), [imports, deps, root].join('\n'));
+  fs.writeFileSync(path.join(args.outdir, rootComponent + '.jsx'), [imports, ...deps, root].join('\n\n'));
   return rootComponent;
 }
 
