@@ -1,4 +1,5 @@
 {
+  "react-benchmark-generator",
   "version": "0.1.0",
   "dependencies": {
     "faker": "^5.5.3"
