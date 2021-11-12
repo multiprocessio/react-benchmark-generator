@@ -2,7 +2,7 @@ const path = require('path');
 const fs = require('fs');
 const faker = require('faker');
 
-const flags = ['--outdir', '--nrootchildren', '--ncomponents'];
+const flags = ['--outdir', '--nrootchildren', '--ncomponents', '--nfiles'];
 const args = {};
 for (let i = 0; i < process.argv.length; i++) {
   const arg = process.argv[i];
@@ -122,6 +122,6 @@ function generateFile(nComponents = 20, nRootChildren = 20) {
   return rootComponent;
 }
 
-for (let i = 0; i < +args.nfiles || 100; i++) {
+for (let i = 0; i < (+args.nfiles || 100); i++) {
   generateFile(+args.ncomponents, +args.nrootchildren);
 }
