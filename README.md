@@ -3,6 +3,10 @@
 This script helps generate large files with custom React components
 for the purposes of benchmarking React/JavaScript tooling.
 
+It generates a random number of components with a random depth of
+children. You can customize the caps of the randomness by passing
+flags as demonstrated below.
+
 ## Run
 
 ```
@@ -13,7 +17,7 @@ node generate.js --outdir out
 ## Example
 
 ```javascript
-$ node generate.js --outdir out --nrootchildren 2 --ncomponents 2 --nfiles 1
+$ node generate.js --outdir out --maxchildren 2 --maxcomponents 2 --nfiles 1
 $ cat out/DoloresEtDeseruntRatione.jsx 
 import React from "react";
 

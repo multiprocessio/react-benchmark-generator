@@ -2,7 +2,7 @@ const path = require('path');
 const fs = require('fs');
 const faker = require('faker');
 
-const flags = ['--outdir', '--nrootchildren', '--ncomponents', '--nfiles'];
+const flags = ['--outdir', '--maxchildren', '--maxcomponents', '--nfiles'];
 const args = {};
 for (let i = 0; i < process.argv.length; i++) {
   const arg = process.argv[i];
@@ -104,16 +104,19 @@ function renderHTML(tree, indent) {
   return `${indent}<${tree.tag}${props}>\n${children.join('\n')}${(children.length ? '\n' : '') + indent}</${tree.tag}>`;
 }
 
-function generateComponent(name, toExport = false, customChildren = [], nChildren = 20) {
-  const tree = generateHTML(customChildren, nChildren);
+function generateComponent(name, toExport = false, customChildren = [], maxChildren = 20) {
+  const tree = generateHTML(customChildren, maxChildren);
   const body = renderHTML(tree, '    ');
   return `${toExport ? 'export ' : ''}function ${name}() {\n  return (\n${body}\n  );\n}`;
 }
 
-function generateFile(nComponents = 20, nRootChildren = 20) {
-  const [rootComponent, ...components] = [...Array(nComponents).keys()].map(name => randomWords(2, 5).map(capitalize).join(''));
-  const deps = components.map((c) => generateComponent(c));
-  const root = generateComponent(rootComponent, true, components, nRootChildren);
+function generateFile(maxComponents, maxChildren) {
+  maxComponents = maxChildren || 20;
+  maxChildren = maxChildren || 20;
+
+  const [rootComponent, ...components] = [...Array(maxComponents).keys()].map(name => randomWords(2, 5).map(capitalize).join(''));
+  const deps = components.map((c) => generateComponent(c, false, [], maxChildren));
+  const root = generateComponent(rootComponent, true, components, maxChildren);
 
   const imports = ['import React from "react";'].join('\n');
 
@@ -123,5 +126,5 @@ function generateFile(nComponents = 20, nRootChildren = 20) {
 }
 
 for (let i = 0; i < (+args.nfiles || 100); i++) {
-  generateFile(+args.ncomponents, +args.nrootchildren);
+  generateFile(+args.maxcomponents, +args.maxchildren);
 }
