@@ -2,7 +2,7 @@ const path = require('path');
 const fs = require('fs');
 const faker = require('faker');
 
-const flags = ['--outdir', '--maxchildren', '--maxcomponents', '--nfiles'];
+const flags = ['--outdir', '--maxchildren', '--maxcomponents', '--nfiles', '--depth'];
 const args = {};
 for (let i = 0; i < process.argv.length; i++) {
   const arg = process.argv[i];
@@ -110,7 +110,7 @@ function generateComponent(name, toExport = false, customChildren = [], maxChild
   return `${toExport ? 'export ' : ''}function ${name}() {\n  return (\n${body}\n  );\n}`;
 }
 
-function generateFile(maxComponents, maxChildren) {
+function generateFile(directory, maxComponents, maxChildren) {
   maxComponents = maxChildren || 20;
   maxChildren = maxChildren || 20;
 
@@ -120,26 +120,51 @@ function generateFile(maxComponents, maxChildren) {
 
   const imports = ['import React from "react";'].join('\n');
 
-  fs.mkdir(args.outdir, { recursive: true }, () => {});
-  fs.writeFileSync(path.join(args.outdir, rootComponent + '.jsx'), [imports, ...deps, root].join('\n\n'));
+  fs.mkdir(directory, { recursive: true }, () => {});
+  fs.writeFileSync(path.join(directory, rootComponent + '.jsx'), [imports, ...deps, root].join('\n\n'));
+
   return rootComponent;
 }
 
-function generateIndex(components) {
+function generateIndex(directory, components) {
   const imports = ['import React from "react";'];
-  components.forEach(function addImport(c) {
-    imports.push(`import { ${c} } from './${c}.jsx';`);
+  const justTheNames = components.map(function addImport(c) {
+    let directory = ".";
+    let file = c;
+    if (c.directory) {
+      directory = c.directory;
+      file = c.file;
+      c = c.import;
+    }
+    imports.push(`import { ${c} } from '${directory}/${file}.jsx';`);
+    return c;
   });
 
-  const root = generateComponent('div', false, components, components.length);
+  const exportName = randomWords(1, 3).map(capitalize).join('');
+  const root = generateComponent(exportName, true, justTheNames, justTheNames.length);
 
-  fs.writeFileSync(path.join(args.outdir, 'index.jsx'), [imports.join('\n'), root].join('\n\n'));
+  fs.writeFileSync(path.join(directory, 'index.jsx'), [imports.join('\n'), root].join('\n\n'));
+  return exportName;
 }
 
-const components = [];
-for (let i = 0; i < (+args.nfiles || 1); i++) {
-  const component = generateFile(+args.maxcomponents, +args.maxchildren);
-  components.push(component);
+function generateDirectory(directory, depth, nFiles) {
+  const components = [];
+  for (let i = 0; i < (nFiles || 1); i++) {
+    const component = generateFile(directory, +args.maxcomponents, +args.maxchildren);
+    components.push(component);
+  }
+
+  if (depth > 0) {
+    const subdir = randomWords(1, 1)
+    const root = generateDirectory(directory + "/" + subdir, depth-1, nFiles);
+    components.push({
+      directory: "./" + subdir,
+      import: root,
+      file: 'index',
+    });
+  }
+
+  return generateIndex(directory, components);
 }
 
-generateIndex(components);
+generateDirectory(args.outdir, +args.depth || 0, +args.nfiles || 20);
