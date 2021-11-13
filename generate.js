@@ -2,6 +2,8 @@ const path = require('path');
 const fs = require('fs');
 const faker = require('faker');
 
+let mt_id = 0;
+
 const flags = ['--outdir', '--maxchildren', '--maxcomponents', '--nfiles', '--depth'];
 const args = {};
 for (let i = 0; i < process.argv.length; i++) {
@@ -114,7 +116,7 @@ function generateFile(directory, maxComponents, maxChildren) {
   maxComponents = maxChildren || 20;
   maxChildren = maxChildren || 20;
 
-  const [rootComponent, ...components] = [...Array(maxComponents).keys()].map(name => randomWords(2, 5).map(capitalize).join(''));
+  const [rootComponent, ...components] = [...Array(maxComponents).keys()].map(name => randomWords(2, 5).map(capitalize).join('') + (mt_id++));
   const deps = components.map((c) => generateComponent(c, false, [], maxChildren));
   const root = generateComponent(rootComponent, true, components, maxChildren);
 
@@ -140,7 +142,7 @@ function generateIndex(directory, components) {
     return c;
   });
 
-  const exportName = randomWords(1, 3).map(capitalize).join('');
+  const exportName = randomWords(1, 3).map(capitalize).join('') + (mt_id++);
   const root = generateComponent(exportName, true, justTheNames, justTheNames.length);
 
   fs.writeFileSync(path.join(directory, 'index.jsx'), [imports.join('\n'), root].join('\n\n'));
